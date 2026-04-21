@@ -2,6 +2,7 @@
 // Created by Administrator on 2017/8/4.
 //
 #include <fcntl.h>
+#include <unistd.h>
 
 #define LOG_TAG "NativeRecord"
 
@@ -69,12 +70,13 @@ bool NativeRecord::prepare() {
     AMediaFormat_delete(videoFormat);
     LOGI("init videoCodec success");
 
-    int fd = open(arguments->path, O_CREAT | O_RDWR, 0666);
-    if (!fd) {
+    int fd = open(arguments->path, O_CREAT | O_RDWR | O_TRUNC, 0666);
+    if (fd < 0) {
         LOGE("open media file failed-->%d", fd);
         return false;
     }
     mMuxer = AMediaMuxer_new(fd, AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
+    close(fd);
     AMediaMuxer_setOrientationHint(mMuxer, 180);
     return true;
 }
