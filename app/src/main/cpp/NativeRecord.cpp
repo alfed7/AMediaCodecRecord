@@ -105,13 +105,13 @@ bool NativeRecord::start() {
     mIsRecording = true;
     mStartFlag = true;
 
-    if (mAudioThread) {
+    if (mAudioThread != 0) {
         pthread_join(mAudioThread, NULL);
-        mAudioThread = NULL;
+        mAudioThread = 0;
     }
-    if (mVideoThread) {
+    if (mVideoThread != 0) {
         pthread_join(mVideoThread, NULL);
-        mVideoThread = NULL;
+        mVideoThread = 0;
     }
     pthread_create(&mVideoThread, NULL, NativeRecord::videoStep, this);
     pthread_create(&mAudioThread, NULL, NativeRecord::audioStep, this);
@@ -157,11 +157,17 @@ void NativeRecord::stop() {
         mMuxer = NULL;
     }
 
-    if (pthread_join(mAudioThread, NULL) != EXIT_SUCCESS) {
-        LOGE("NativeRecord::terminate audio thread: pthread_join failed");
+    if (mAudioThread != 0) {
+        if (pthread_join(mAudioThread, NULL) != EXIT_SUCCESS) {
+            LOGE("NativeRecord::terminate audio thread: pthread_join failed");
+        }
+        mAudioThread = 0;
     }
-    if (pthread_join(mVideoThread, NULL) != EXIT_SUCCESS) {
-        LOGE("NativeRecord::terminate video thread: pthread_join failed");
+    if (mVideoThread != 0) {
+        if (pthread_join(mVideoThread, NULL) != EXIT_SUCCESS) {
+            LOGE("NativeRecord::terminate video thread: pthread_join failed");
+        }
+        mVideoThread = 0;
     }
 
     pthread_mutex_unlock(&media_mutex);
@@ -245,6 +251,7 @@ void *NativeRecord::videoStep(void *obj) {
             void *data = *record->frame_queue.wait_and_pop().get();
             if (data != NULL && out_size > 0) {
                 memcpy(buffer, data, out_size);
+                free(data);
                 AMediaCodec_queueInputBuffer(record->videoCodec, index, 0, out_size,
                                              (systemnanotime() - record->nanoTime) / 1000,
                                              record->mIsRecording ? 0

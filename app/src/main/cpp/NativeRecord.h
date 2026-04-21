@@ -38,7 +38,7 @@ private:
 
     int mAudioTrack = -1, mVideoTrack = -1;
 
-    pthread_t mAudioThread, mVideoThread;
+    pthread_t mAudioThread = 0, mVideoThread = 0;
     pthread_mutex_t media_mutex;
 
     int64_t fpsTime;

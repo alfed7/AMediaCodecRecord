@@ -52,13 +52,14 @@ Java_com_quinn_amediacodecrecord_NativeRecord_nativePrepare(JNIEnv *env, jclass 
 JNIEXPORT void JNICALL
 Java_com_quinn_amediacodecrecord_NativeRecord_nativeSendVideoData(JNIEnv *env, jclass type,
                                                             jbyteArray data_) {
-    jbyte *data = env->GetByteArrayElements(data_, NULL);
-
-    if (record != NULL) {
-        record->feedData(data);
+    if (record != NULL && data_ != NULL) {
+        jsize length = env->GetArrayLength(data_);
+        void *data = malloc(length);
+        if (data != NULL) {
+            env->GetByteArrayRegion(data_, 0, length, static_cast<jbyte *>(data));
+            record->feedData(data);
+        }
     }
-
-    env->ReleaseByteArrayElements(data_, data, 0);
 }
 
 jboolean Java_com_quinn_amediacodecrecord_NativeRecord_nativeStart(JNIEnv *env, jclass type) {
